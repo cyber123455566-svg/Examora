@@ -1,0 +1,156 @@
+// SecureTest V0.2 Database Schema - PostgreSQL Target
+// Configured for PostgreSQL production deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  name            String
+  email           String        @unique
+  passwordHash    String
+  role            String        @default("STUDENT") // TEACHER | STUDENT
+  department      String?
+  studentIdNumber String?       @unique
+  staffId         String?       @unique
+  phone           String?
+  accountStatus   String        @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED
+  emailVerified   Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  createdTests    Test[]        @relation("TeacherTests")
+  attempts        TestAttempt[] @relation("StudentAttempts")
+
+  @@index([role])
+  @@index([accountStatus])
+}
+
+model Test {
+  id                 String        @id @default(cuid())
+  title              String
+  subject            String
+  description        String?
+  instructions       String?
+  durationMinutes    Int           @default(60)
+  totalMarks         Int           @default(0)
+  passingPercentage  Float         @default(40.0)
+  maximumAttempts    Int           @default(1)
+  startAt            DateTime?
+  endAt              DateTime?
+  status             String        @default("DRAFT") // DRAFT | PUBLISHED | CLOSED
+  randomizeQuestions Boolean       @default(false)
+  randomizeOptions   Boolean       @default(false)
+  teacherId          String
+  teacher            User          @relation("TeacherTests", fields: [teacherId], references: [id])
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  questions          Question[]
+  attempts           TestAttempt[]
+
+  @@index([teacherId])
+  @@index([status])
+}
+
+model Question {
+  id            String           @id @default(cuid())
+  testId        String
+  test          Test             @relation(fields: [testId], references: [id], onDelete: Cascade)
+  questionText  String
+  questionType  String           @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE | TRUE_FALSE | SHORT_ANSWER
+  marks         Int              @default(1)
+  orderIndex    Int              @default(0)
+  correctAnswer String
+  optionsJson   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  options       QuestionOption[]
+  answers       Answer[]
+
+  @@index([testId])
+}
+
+model QuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionKey   String   // "A", "B", "C", "D"
+  optionText  String
+  orderIndex  Int      @default(0)
+
+  @@index([questionId])
+}
+
+model TestAttempt {
+  id                String      @id @default(cuid())
+  testId            String
+  test              Test        @relation(fields: [testId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           User        @relation("StudentAttempts", fields: [studentId], references: [id], onDelete: Cascade)
+  status            String      @default("IN_PROGRESS") // IN_PROGRESS | SUBMITTED | TERMINATED | EXPIRED
+  score             Float?
+  percentage        Float?
+  isPassed          Boolean?
+  evaluationStatus  String?     @default("COMPLETED") // COMPLETED | NEEDS_GRADING
+  violationCount    Int         @default(0)
+  terminationReason String?
+  startedAt         DateTime    @default(now())
+  submittedAt       DateTime?
+  terminatedAt      DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now()) @updatedAt
+
+  answers           Answer[]
+  violations        Violation[]
+
+  @@index([testId])
+  @@index([studentId])
+  @@index([status])
+  @@index([studentId, testId, status])
+}
+
+model Answer {
+  id               String      @id @default(cuid())
+  attemptId        String
+  attempt          TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer           String?
+  selectedOption   String?
+  textResponse     String?
+  isCorrect        Boolean?
+  marksAwarded     Float?
+  pointsAwarded    Float?
+  evaluationStatus String?     @default("AUTOMATIC") // AUTOMATIC | PENDING | EVALUATED
+  evaluatedAt      DateTime?
+  evaluatedBy      String?
+  feedback         String?
+  answeredAt       DateTime    @default(now())
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+model Violation {
+  id            String      @id @default(cuid())
+  attemptId     String
+  attempt       TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  violationType String
+  metadata      String?
+  metadataJson  String?
+  severity      String      @default("WARNING")
+  timestamp     DateTime    @default(now())
+  detectedAt    DateTime    @default(now())
+
+  @@index([attemptId])
+}
