@@ -1,0 +1,12 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="8" fill="url(#examora-grad)"/>
+  <path d="M8 8C8 6.89543 8.89543 6 10 6H22C22.5523 6 23 6.44772 23 7C23 7.55228 22.5523 8 22 8H10V13.5H20C20.5523 13.5 21 13.9477 21 14.5C21 15.0523 20.5523 15.5 20 15.5H10V24H22C22.5523 24 23 24.4477 23 25C23 25.5523 22.5523 26 22 26H10C8.89543 26 8 25.1046 8 24V8Z" fill="white"/>
+  <circle cx="19.5" cy="19.5" r="2.5" fill="#38BDF8"/>
+  <defs>
+    <linearGradient id="examora-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="0.5" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+</svg>
